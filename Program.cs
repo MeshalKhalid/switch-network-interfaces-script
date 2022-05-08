@@ -1,12 +1,10 @@
 using System.Diagnostics;
-using System.Management.Automation;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 
 class InterceptKeys
 {
-    //WH => 
-    //LL => low level
+
     //Process:
     //     Provides access to local and remote processes and enables you to start and stop
     //     local system processes.
@@ -14,7 +12,7 @@ class InterceptKeys
     //13 Global LowLevel keyboard hook number
     // private const int WindowsHook_KEYBOARD_LowLevel = 13;
     private const int WindowsHook_Mouse_LowLevel = 14;
-
+    
     private const string WIFI_INTERFACE_NAME = "Wi-Fi 2";
     private const string ETHERNET_INTERFACE_NAME = "Ethernet";
     //https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
@@ -37,17 +35,10 @@ class InterceptKeys
 
     private static IntPtr SetHook(LowLevelKeyboardProc proc)
     {
-        var a = Process.GetProcesses();
-        foreach (var item in a)
+        using (Process currentProcess = Process.GetCurrentProcess())
+        using (ProcessModule curModule = currentProcess.MainModule)
         {
-
-
-        }
-        using (Process curProcess = Process.GetCurrentProcess())
-        using (ProcessModule curModule = curProcess.MainModule)
-        {
-            return SetWindowsHookEx(WindowsHook_Mouse_LowLevel, proc,
-                GetModuleHandle(curModule.ModuleName), 0);
+            return SetWindowsHookEx(WindowsHook_Mouse_LowLevel, proc, GetModuleHandle(curModule.ModuleName), 0);
         }
     }
 
@@ -57,41 +48,49 @@ class InterceptKeys
     {
         if (nCode >= 0 && (wParam == (IntPtr)WM_XBUTTONUP || wParam == (IntPtr)WM_XBUTTONDOWN))
         {
-
-            try
-            {
-                if (IsInterfaceEnabled(ETHERNET_INTERFACE_NAME))
-                {
-                    DisableAdapter(ETHERNET_INTERFACE_NAME);
-                    EnableAdapter(WIFI_INTERFACE_NAME);
-                }
-                else
-                {
-                    EnableAdapter(ETHERNET_INTERFACE_NAME);
-                    DisableAdapter(WIFI_INTERFACE_NAME);
-                }
-            }
-            catch (System.Exception e)
-            {
-                    Console.WriteLine(e.Message);
-            }
-            int vkCode = Marshal.ReadInt32(lParam);
-            Console.WriteLine((Keys)vkCode);
+            SwitchNetworks();
         }
         return CallNextHookEx(_hookID, nCode, wParam, lParam);
     }
 
 
+    private static void SwitchNetworks()
+    {
+        try
+        {
+            if (IsInterfaceEnabled(ETHERNET_INTERFACE_NAME))
+            {
+                DisableAdapter(ETHERNET_INTERFACE_NAME);
+                EnableAdapter(WIFI_INTERFACE_NAME);
+            }
+            else
+            {
+                EnableAdapter(ETHERNET_INTERFACE_NAME);
+                DisableAdapter(WIFI_INTERFACE_NAME);
+            }
+        }
+        catch (System.Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+    }
+
     static void EnableAdapter(string interfaceName)
     {
-        ProcessStartInfo psi = new ProcessStartInfo("netsh", "interface set interface \"" + interfaceName + "\" enable");
-        psi.WindowStyle = ProcessWindowStyle.Hidden;
-        psi.UseShellExecute = true;
-        psi.Verb = "runas";
-        Process p = new Process();
-        p.StartInfo = psi;
-        p.Start();
+        ProcessStartInfo psi = new ProcessStartInfo("netsh", "interface set interface \"" + interfaceName + "\" enable")
+        {
+            WindowStyle = ProcessWindowStyle.Hidden,
+            UseShellExecute = true,
+            Verb = "runas"
+        };
 
+
+        Process process = new Process
+        {
+            StartInfo = psi
+        };
+
+        process.Start();
     }
 
     static void DisableAdapter(string interfaceName)
@@ -109,6 +108,8 @@ class InterceptKeys
 
     public static bool IsInterfaceEnabled(string name)
     {
+        //Given the name of the network interfac,
+        // this function returns  the interface is enabled or not
         NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
         return adapters.ToList().Exists(e => e.Name == name);
     }
