@@ -40,13 +40,13 @@ class InterceptKeys
         {
             return SetWindowsHookEx(WindowsHook_Mouse_LowLevel, proc, GetModuleHandle(curModule.ModuleName), 0);
         }
-    }
+    } 
 
     private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
     private static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode >= 0 && (wParam == (IntPtr)WM_XBUTTONUP || wParam == (IntPtr)WM_XBUTTONDOWN))
+        if (nCode >= 0 && wParam == (IntPtr)WM_XBUTTONUP)
         {
             SwitchNetworks();
         }
