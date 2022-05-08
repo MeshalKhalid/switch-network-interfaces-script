@@ -4,25 +4,10 @@ using System.Runtime.InteropServices;
 
 class MouseClicksInterceptor
 {
-
-    //Process:
-    //     Provides access to local and remote processes and enables you to start and stop
-    //     local system processes.
-
-    //13 Global LowLevel keyboard hook number
-    // private const int WindowsHook_KEYBOARD_LowLevel = 13;
     private const int WindowsHook_Mouse_LowLevel = 14;
-
     private const string WIFI_INTERFACE_NAME = "Wi-Fi 2";
     private const string ETHERNET_INTERFACE_NAME = "Ethernet";
-    //https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
-    //Keystroke messages
-
     private const int WM_XBUTTONUP = 0x020C;
-    private const int WM_XBUTTONDOWN = 0x020B;
-
-
-
     private static LowLevelKeyboardProc _proc = HookCallback;
     private static IntPtr _hookID = IntPtr.Zero;
 
@@ -77,7 +62,22 @@ class MouseClicksInterceptor
 
     static void EnableAdapter(string interfaceName)
     {
-        ProcessStartInfo psi = new ProcessStartInfo("netsh", "interface set interface \"" + interfaceName + "\" enable")
+        string command = "interface set interface \"" + interfaceName + "\" enable";
+
+        RunNetSHCommand(command);
+    }
+
+
+    static void DisableAdapter(string interfaceName)
+    {
+        string command = "interface set interface \"" + interfaceName + "\" disable";
+        RunNetSHCommand(command);
+    }
+
+
+    static void RunNetSHCommand(string command)
+    {
+        ProcessStartInfo psi = new ProcessStartInfo("netsh", command)
         {
             WindowStyle = ProcessWindowStyle.Hidden,
             UseShellExecute = true,
@@ -92,19 +92,6 @@ class MouseClicksInterceptor
 
         process.Start();
     }
-
-    static void DisableAdapter(string interfaceName)
-    {
-        ProcessStartInfo psi = new ProcessStartInfo("netsh", "interface set interface \"" + interfaceName + "\" disable");
-        psi.WindowStyle = ProcessWindowStyle.Hidden;
-        psi.UseShellExecute = true;
-        psi.Verb = "runas";
-        Process p = new Process();
-        p.StartInfo = psi;
-        p.Start();
-
-    }
-
 
     public static bool IsInterfaceEnabled(string name)
     {
