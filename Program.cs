@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 
-class InterceptKeys
+class MouseClicksInterceptor
 {
 
     //Process:
@@ -12,7 +12,7 @@ class InterceptKeys
     //13 Global LowLevel keyboard hook number
     // private const int WindowsHook_KEYBOARD_LowLevel = 13;
     private const int WindowsHook_Mouse_LowLevel = 14;
-    
+
     private const string WIFI_INTERFACE_NAME = "Wi-Fi 2";
     private const string ETHERNET_INTERFACE_NAME = "Ethernet";
     //https://docs.microsoft.com/en-us/windows/win32/inputdev/wm-keydown
@@ -40,7 +40,7 @@ class InterceptKeys
         {
             return SetWindowsHookEx(WindowsHook_Mouse_LowLevel, proc, GetModuleHandle(curModule.ModuleName), 0);
         }
-    } 
+    }
 
     private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
@@ -69,7 +69,7 @@ class InterceptKeys
                 DisableAdapter(WIFI_INTERFACE_NAME);
             }
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
             Console.WriteLine(e.Message);
         }
