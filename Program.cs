@@ -80,8 +80,7 @@ class MouseClicksInterceptor
         ProcessStartInfo psi = new ProcessStartInfo("netsh", command)
         {
             WindowStyle = ProcessWindowStyle.Hidden,
-            UseShellExecute = true,
-            Verb = "runas"
+            UseShellExecute = true
         };
 
 
